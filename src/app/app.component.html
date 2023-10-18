@@ -8,4 +8,4 @@
 </div>
 <button class="button" (click)="file.click()">Selecione um JSON</button>
 
-<div [innerHTML]="texto"></div>
+<div #json (click)="toggleJSONView($event)"></div>

@@ -22,6 +22,41 @@
 
 }
 
-.chave {
+.line {
+  height: 100%;
+  width: 1px;
+  // bottom: -6%;
+  background: #BFBFBF;
+  position: absolute;
+}
+
+
+.json-key {
   color: #4E9590;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+li {
+  position: relative;
+  list-style: none;
+}
+
+.json-object,
+.json-array {
+  display: none;
+}
+
+.array-start {
+  border-left: 2px solid green;
+  /* Cor e espessura da linha à esquerda no início do array */
+  padding-left: 5px;
+  /* Espaçamento à esquerda para a linha de início do array */
+}
+
+.array-end {
+  border-right: 2px solid red;
+  /* Cor e espessura da linha à direita no fim do array */
+  padding-right: 5px;
+  /* Espaçamento à direita para a linha de fim do array */
 }
