@@ -14,31 +14,40 @@ export class AppComponent implements AfterViewInit {
 
   }
   @ViewChild('json') json!: ElementRef;
-  processarArquivo = (elemento: any) => {
+  resetarVariaveis = () => {
+    this.json.nativeElement.value = '';
+    this.countEl = 0;
+    this.texto = '';
+    this.jsonComplet = '';
 
-    // let texto!: string;
-    const file = elemento.target.files[0];
-    const chunkSize: number = 504; // Tamanho da parte a ser lida de cada vez (ajuste conforme necessário)
+  }
+  processarArquivo = (elemento: any) => {
+    this.resetarVariaveis();
+    const arquivo = elemento.target.files[0];
+    const megaByteAserBaixados: number = 504; // Tamanho da parte a ser lida de cada vez (ajuste conforme necessário)
 
     const reader = new FileReader();
-    let offset = 0;
-    let texto = ''
-    let jsonString = '';
+    let quantidadeBaixadaDoArquivo = 0;
+    let jsonEmString = '';
     let pilha: any[] = []; // Pilha para rastrear aberturas
 
     reader.onload = (event: any) => {
-      // Aqui você pode processar os dados da parte lida, por exemplo, exibi-los no front-end ou enviá-los ao servidor.
-      texto = (event.target.result);
-      let arr = texto.replace(/\n/g, '').replace(/\s/g, '').split('');
-      // Variável para acumular a string JSON
+
+      let parteBaixadaDoJson = (event.target.result);
+
+      let arrayDeCaracteres = parteBaixadaDoJson.replace(/\n/g, '').replace(/\s/g, '').split('');
+
       let fechamentoPendente = ''; // Variável para armazenar o fechamento pendente
 
       const processarCaractere = (caractere: string) => {
-        jsonString += caractere;
+        jsonEmString += caractere;
         try {
-          let json = JSON.parse(jsonString + pilha.join(' '))
+          this.jsonComplet = JSON.parse(jsonEmString + pilha.join(' '))
+
           let el = this.json.nativeElement
-          this.criarJson(el, json);
+          this.criarJson(el, this.jsonComplet);
+          // pilha.pop()
+
         } catch (error) {
 
         }
@@ -49,6 +58,7 @@ export class AppComponent implements AfterViewInit {
         } else if (caractere === '[') {
           pilha.push(']');
         } else if (caractere === '}' || caractere === ']') {
+
           if (pilha.length === 0) {
             fechamentoPendente += caractere; // Armazena o fechamento pendente
           } else {
@@ -59,14 +69,22 @@ export class AppComponent implements AfterViewInit {
           }
         }
 
-        if (pilha.length === 0 && jsonString.trim() !== '') {
+        if (pilha.length === 0 && jsonEmString.trim() !== '' && (caractere === '}' || caractere == ']')) {
           // Se a pilha estiver vazia, a parte é completa
-          let parteJSON = jsonString;
-          jsonString = '';
+          let parteJSON = jsonEmString + pilha.join('');
+          try {
+            JSON.parse(parteJSON);
+          } catch (error) {
+            console.log(error);
+            return;
+          }
+          // jsonEmString = '';
+
           // Verifica se há um fechamento pendente e remove se houver
           if (fechamentoPendente !== '') {
             parteJSON += fechamentoPendente;
             fechamentoPendente = '';
+            debugger
           }
 
         }
@@ -75,114 +93,28 @@ export class AppComponent implements AfterViewInit {
       }
 
 
-      arr.forEach(el => {
+      arrayDeCaracteres.forEach((el: any) => {
         processarCaractere(el)
       })
 
-
-      // Exemplo de uso:
-      // const dados = ['{ "nome": "João", "idade": 30,', ' "casado": false } [1, 2, {', ' "key": "value" } ]'];
-
-
       const el: HTMLElement = this.json.nativeElement;
-      // this.criarJson(el, JSON.parse(texto));
-      // const validaFormatoObjeto = (jsonString: string) => {
 
-      //   arr = jsonString.replace(/\n/g, '').replace(/\s/g, '').split('');
-      //   console.log(arr)
-      //   const validaEstruturaJSON = (arrayDeCaracteres: any[]) => {
-      //     const stack: any = [];
-      //     const aberturas = ["{", "["];
-      //     const fechamentos = ["}", "]"];
-      //     let parteRemovida = '';
-
-      //     for (let i = 0; i < arrayDeCaracteres.length; i++) {
-      //       const caractere = arrayDeCaracteres[i];
-
-      //       if (aberturas.includes(caractere)) {
-      //         // Se for um caractere de abertura, empilhe-o na pilha
-      //         stack.push(caractere);
-      //       } else if (fechamentos.includes(caractere)) {
-      //         // Se for um caractere de fechamento, verifique se ele corresponde ao último caractere na pilha
-      //         const ultimoAberto = stack.pop();
-      //         if (!ultimoAberto || aberturas.indexOf(ultimoAberto) !== fechamentos.indexOf(caractere)) {
-      //           return false; // O fechamento não corresponde ao último caractere de abertura
-      //         }
-
-      //         // Se a pilha ficar vazia, todos os pares foram fechados corretamente
-      //         if (stack.length === 0) {
-      //           // Remova a parte fechada do array
-      //           parteRemovida = arrayDeCaracteres.splice(0, i + 1).join('');
-      //           break;
-      //         }
-      //       }
-      //     }
-
-      //     return parteRemovida;
-      //   }
-
-
-
-      //   const parteRemovida = validaEstruturaJSON(arr);
-
-      //   if (parteRemovida) {
-      //     console.log("Parte removida da estrutura JSON:");
-      //     console.log(parteRemovida);
-      //   } else {
-      //     console.log("A estrutura JSON não é válida.");
-      //   }
-
-      //   // Verifica se a string começa com '{' e termina com '}'
-      //   // if (jsonString[0] === '{') {
-
-      //   //   jsonString = jsonString.slice(1, -1);
-
-      //   //   // Divide a string em pares chave-valor
-      //   //   const pares = jsonString.split(",");
-      //   //   const validaValorJSON = (valor: any) => {
-      //   //     // Adicione aqui as validações para diferentes tipos de valores, como strings, números, objetos, etc.
-      //   //     // Por enquanto, retornamos true para todos os valores.
-      //   //     return true;
-      //   //   }
-      //   //   // Verifica cada par chave-valor
-      //   //   for (const par of pares) {
-      //   //     const [chave, valor] = par.split(":");
-      //   //     const chaveValida = /^"\w+"$/.test(chave?.trim());
-      //   //     const valorValido = validaValorJSON(valor?.trim());
-
-      //   //     if (!chaveValida || !valorValido) {
-      //   //       return false;
-      //   //     }
-      //   //   }
-
-      //   //   return true;
-      //   // } else {
-      //   //   return false;
-      //   // }
-      // }
-
-      // const res = validaFormatoObjeto(texto)
-      // console.log(res);
-      // console.log(texto);
-      // reader.readAsText(file);
-      // this.tratarTexto(texto);
-
-      offset += event.target.result.length;
+      quantidadeBaixadaDoArquivo += event.target.result.length;
 
       // Verifica se há mais dados para ler
-      if (offset < file.size) {
-        const nextChunk = file.slice(offset, offset + chunkSize);
+      if (quantidadeBaixadaDoArquivo < arquivo.size) {
+        const nextChunk = arquivo.slice(quantidadeBaixadaDoArquivo, quantidadeBaixadaDoArquivo + megaByteAserBaixados);
         reader.readAsText(nextChunk);
+      } else {
+        const js = JSON.stringify(this.jsonComplet)
+        console.log(JSON.parse(js))
       }
     };
-    // reader.readAsText(file);
+    // reader.readAsText(arquivo);
 
     // Inicia a leitura da primeira parte
-    const initialChunk = file.slice(0, chunkSize);
+    const initialChunk = arquivo.slice(0, megaByteAserBaixados);
     reader.readAsText(initialChunk);
-
-
-
 
 
 
@@ -250,87 +182,10 @@ export class AppComponent implements AfterViewInit {
 
   texto!: string
 
-  // lazyLoadJSON(key: string) {
-  //   return new Promise((resolve, reject) => {
-  //     if (bigJSON.hasOwnProperty(key)) {
-  //       resolve(bigJSON[key]);
-  //     } else {
-  //       reject("Chave não encontrada no JSON.");
-  //     }
-  //   });
-  // }
-  tratarTexto = (textoJson: string) => {
-
-    // try {
-    //   JSON.parse(textoJson);
-    // } catch (e) {
-    //   this.tratarError(e)
-    //   console.error(e);
-    //   return;
-    // }
-
-    const arr = textoJson.replace(/\n/g, '').replace(/\s/g, '').split('');
-    // console.log(textoJson);
-    let encontrouPrimeira = false;
-
-    const newArray = arr.map((letra: string, index: number) => {
-      if (letra == '{') {
-        arr.splice(index + 1, 0, "<br>");
-      }
-      if (arr[index - 1] == '"' && letra == ',') {
-        arr.splice(index + 1, 0, "<br>");
-      }
-
-
-      if (letra === '"' && !encontrouPrimeira && (arr[index - 2] === '{' || arr[index - 2] === ',')) {
-        letra = `<span class='chave font-inter'> `;
-        // arr.splice(index - 2, 0, '&nbsp')
-        encontrouPrimeira = true;
-
-        if (letra == ':') arr.splice(index, 0, ' ');
-
-      } else if (letra === '"' && encontrouPrimeira) {
-        letra = `</span>`
-        encontrouPrimeira = false;
-
-      }
-
-      return letra;
-    })
-    this.texto = newArray.join('')
-    console.log(newArray);
-    const string = arr.join('');
-    // console.log(string);
-
-    // for (const str of arr) {
-    //   console.log(str);
-    //   for (let i = 0; i < str.length; i++) {
-    //     if (str[i] === '"' && !encontrouPrimeira) {
-    //       posicao1 = i;
-    //       encontrouPrimeira = true;
-    //     } else if (str[i] === '"' && encontrouPrimeira) {
-    //       encontrouPrimeira = false;
-    //       posicao2 = i;
-    //       // console.log(arr[posicao1]);
-    //       // const novaMatriz = arr.slice(posicao1, i)
-    //       // console.log(novaMatriz)
-    //       // i += 2; // Ignora as duas aspas duplas seguintes
-    //       // console.log(arr[i]);
-    //       // console.log(`Encontrou a segunda aspa dupla após a primeira em "${str}"`);
-    //     }
-    //   }
-    // }
-
-    // console.log(arr);
-  }
-
-  tratarError = (e: any) => {
-    console.error(e);
-  }
-
   title = 'rinha_front';
-
   countEl: any = 0;
+  jsonComplet!: string;
+
   criarJson(elemento: HTMLElement, json: any, classe: string = '', i = 0) {
     this.countEl++
     const existeUl = document.querySelector('.ul-' + i + classe)
@@ -360,7 +215,7 @@ export class AppComponent implements AfterViewInit {
             this.criarJson(existingElement, json[key], this.countEl, i);
           } else {
             // Trate objetos como JSON formatado
-            existingElement.innerText = `${key}: ${JSON.stringify(json[key])}`;
+            // existingElement.innerText = `${key}: ${JSON.stringify(json[key])}`;
           }
         } else {
           // const element = document.createElement("span");
@@ -376,6 +231,7 @@ export class AppComponent implements AfterViewInit {
             // console.log(element.innerText);
 
             const valueSpan = document.createElement("span");
+            valueSpan.className = "json-value"
             valueSpan.innerText = typeof json[key] === "string" ? `"${json[key]}"` : json[key];
             li.appendChild(valueSpan);
           }
@@ -386,7 +242,6 @@ export class AppComponent implements AfterViewInit {
       }
     }
   }
-
 
 
 
